@@ -86,6 +86,9 @@ def main():
     upstream.domain_substitution = types.SimpleNamespace(apply_substitution=post_patch_hook)
 
     sys.argv = [str(workdir / 'build.py')] + upstream_args
+    # Upstream's build script uses paths relative to its own folder
+    # (e.g. ungoogled-chromium\utils\clone.py, build\src), so run it from there.
+    os.chdir(workdir)
     try:
         upstream.main()
     except upstream._BuildTimeout:  # pylint: disable=protected-access
