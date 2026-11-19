@@ -62,9 +62,7 @@ One of Bastion's own patches no longer fits the new Chromium code. Refresh it:
    ```bash
    git add -A && git commit -m "Update to upstream <tag>" && git push
    ```
-   ```bash
-   python3 tools/make_release.py
-   ```
+   Then start **Actions → build → Run workflow** on `main`.
 
 ### "PATCH(ES) FAILED" and the failed file is an ungoogled-chromium patch
 That's upstream's problem, not Bastion's, and very rare in a published
@@ -93,8 +91,9 @@ Open the failed run in **Actions**:
 1. Change what you need (patches, config, branding), and make sure
    `python3 tools/check_patches.py` passes.
 2. Increase `revision` in `config/bastion.toml` (e.g. `1` → `2`), commit, push.
-3. Run `python3 tools/make_release.py`. It tags the commit; the tag starts
-   the build, and the Release appears when the build finishes.
+3. On GitHub: **Actions → build → Run workflow** (branch `main`). The
+   Release appears when the build finishes. (`python3 tools/make_release.py`
+   does the same from your PC by pushing a tag.)
 
 ## Moving to a specific upstream version by hand
 
@@ -102,7 +101,7 @@ Open the failed run in **Actions**:
 python3 tools/bump_upstream.py --to 157.0.8103.78-1.1
 ```
 
-Then run the patch check, commit, push and `make_release.py` as above.
+Then run the patch check, commit, push and start the build as above.
 
 ## Secrets
 

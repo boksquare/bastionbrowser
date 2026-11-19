@@ -19,12 +19,19 @@ HEAD = '''\
 # tree to the next one (expect roughly a day end to end).
 #
 # Runs when:
-#   * a tag is pushed (e.g. 157.0.8103.78-1) -> build + publish a GitHub Release
-#   * started by hand (Actions tab -> build -> Run workflow) -> build; it also
-#     publishes a release if you pick a tag in the "Use workflow from" menu
+#   * a tag is pushed (e.g. 157.0.8103.78-1) -> build + publish that Release
+#   * started by hand (Actions tab -> build -> Run workflow) -> build, then
+#     publish a Release tagged with the version from config/bastion.toml
+#     (untick "Publish a release" for a test build; the installer is then
+#     only kept as a run artifact for 4 days)
 name: build
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish a GitHub Release when the build finishes
+        type: boolean
+        default: true
   push:
     tags:
       - '*'
@@ -95,16 +102,30 @@ TAIL = '''
           path: dist
       - name: Checksums
         run: cd dist && sha256sum bastion_* | tee SHA256SUMS.txt
-      - name: Publish GitHub Release (tags only)
-        if: github.ref_type == 'tag'
+      - name: Work out the release tag
+        id: tag
+        run: |
+          if [ "${{{{ github.ref_type }}}}" = "tag" ]; then
+            tag="${{{{ github.ref_name }}}}"
+          else
+            # The version the packages were built as, e.g. bastion_157.0.8103.78-1_installer_x64.exe
+            f=$(ls dist | grep '_installer_' | head -n1)
+            tag=${{f#bastion_}}
+            tag=${{tag%%_installer_*}}
+          fi
+          [ -n "$tag" ] || {{ echo "Could not determine the release tag"; exit 1; }}
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag' || inputs.publish_release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{{{ github.ref_name }}}}
-          name: Bastion ${{{{ github.ref_name }}}}
+          tag_name: ${{{{ steps.tag.outputs.tag }}}}
+          target_commitish: ${{{{ github.sha }}}}
+          name: Bastion ${{{{ steps.tag.outputs.tag }}}}
           fail_on_unmatched_files: true
           overwrite_files: true
           body: |
-            Bastion for Windows x64, built from tag `${{{{ github.ref_name }}}}`.
+            Bastion for Windows x64, version `${{{{ steps.tag.outputs.tag }}}}`.
 
             * `bastion_*_installer_x64.exe` installs for your Windows user (no admin needed).
             * `bastion_*_windows_x64.zip` is portable: unzip it and run `chrome.exe`.

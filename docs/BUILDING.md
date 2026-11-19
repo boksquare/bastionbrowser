@@ -7,11 +7,13 @@ Builds run on GitHub's free Windows runners (free because the repo is public).
 - **Automatic:** the `upstream-watch` workflow builds and releases each new
   Chromium version by itself. See [MAINTAINING.md](MAINTAINING.md).
 - **Release your own change:** bump `revision` in `config/bastion.toml`,
-  commit, push, then run `python tools/make_release.py` (it tags the commit;
-  the tag starts the `build` workflow, which publishes a Release when done).
-- **Test build without a release:** GitHub → **Actions** → **build** →
-  **Run workflow** on `main`. The installer appears as a downloadable
-  artifact (`bastion-x64`) on the run page, kept for 4 days.
+  commit and push, then GitHub → **Actions** → **build** → **Run workflow**
+  (on `main`). When the build finishes it publishes a Release tagged with
+  the new version. (Or run `python tools/make_release.py`, which pushes a
+  tag that starts the same build.)
+- **Test build without a release:** same, but untick *Publish a GitHub
+  Release*. The installer is then only a downloadable artifact
+  (`bastion-x64`) on the run page, kept for 4 days.
 
 ### Why it takes about a day
 A GitHub runner has 4 CPU cores and 16 GB RAM, and a job may run at most 6
