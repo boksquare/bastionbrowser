@@ -1,0 +1,37 @@
+# Bastion build configuration.
+#
+# Bastion is built on top of ungoogled-chromium-windows (pinned as a git
+# submodule in upstream/). This file says what we change about that base.
+
+[release]
+# Bumped every time we ship a new Bastion build on the same Chromium version.
+# Reset to 1 whenever the Chromium version changes (tools/bump_upstream.py does this).
+revision = 1
+
+[upstream]
+# ungoogled-chromium applies "domain substitution": it rewrites every Google
+# domain in the source to a dead one, as a safety net. Bastion keeps some
+# Google services on purpose (Translate, Safe Browsing, Chrome Web Store),
+# which that rewrite would break, so it is off.
+domain_substitution = false
+
+# ungoogled-chromium patches Bastion deliberately does NOT apply.
+# Paths are relative to upstream/ungoogled-chromium-windows/ungoogled-chromium/patches.
+# The build fails loudly if one of these is no longer in the upstream series
+# (upstream renamed or removed it), so a stale entry can't go unnoticed.
+exclude_patches = [
+  # Turns off password saving, autofill, translate offers and more by default.
+  # Bastion keeps Chrome's defaults (and sets its own in patches/bastion/).
+  "extra/inox-patchset/0006-modify-default-prefs.patch",
+  # Breaks Chrome Web Store installs and extension auto-updates.
+  "core/ungoogled-chromium/disable-webstore-urls.patch",
+  # Replaces Google as the default search engine with "no search".
+  "core/ungoogled-chromium/replace-google-search-engine-with-nosearch.patch",
+  # Asks where to save every download; Bastion uses Chrome's behaviour.
+  "extra/iridium-browser/prefs-always-prompt-for-download-directory-by-defaul.patch",
+]
+
+[gn]
+# Extra GN build arguments, appended after ungoogled-chromium's flags.gn and
+# flags.windows.gn (later values win). See config/flags.bastion.gn.
+flags_file = "config/flags.bastion.gn"

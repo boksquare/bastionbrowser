@@ -1,0 +1,34 @@
+# Fast safety net (~15 min, Linux): whenever patches, config, branding or the
+# upstream pin change, make sure everything still applies to the real
+# Chromium source before anyone spends a day on a Windows build.
+name: check-patches
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'patches/**'
+      - 'config/**'
+      - 'branding/**'
+      - 'upstream/**'
+      - 'tools/**'
+      - 'build.py'
+      - '.github/workflows/check-patches.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/free-disk-space
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Apply every patch to the official Chromium source
+        run: python tools/check_patches.py --workdir "$RUNNER_TEMP/work" --cache "$RUNNER_TEMP/cache"

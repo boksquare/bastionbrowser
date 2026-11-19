@@ -1,0 +1,19 @@
+name: Build stage
+description: >
+  Runs one resumable slice of the Chromium build. GitHub-hosted runners stop a
+  job after 6 hours and a full build takes far longer, so each stage builds for
+  ~3.5 hours, uploads the half-built tree as an artifact, and the next stage
+  resumes from it.
+inputs:
+  finished:
+    description: True if an earlier stage already finished the build (this stage then does nothing).
+    required: true
+  from_artifact:
+    description: True to resume from the previous stage's artifact.
+    required: true
+outputs:
+  finished:
+    description: True once the build and packaging are done.
+runs:
+  using: 'node24'
+  main: 'index.js'

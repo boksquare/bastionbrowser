@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Bastion logo: a shield holding a fortified tower. -->
+  <defs>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14808F"/>
+      <stop offset="1" stop-color="#0A3A47"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5FE3D6"/>
+      <stop offset="1" stop-color="#1FA7A0"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield -->
+  <path d="M128 10 L230 46 V120 C230 184 188 228 128 248 C68 228 26 184 26 120 V46 Z"
+        fill="url(#rim)"/>
+  <path d="M128 26 L216 57 V121 C216 175 180 213 128 231 C76 213 40 175 40 121 V57 Z"
+        fill="url(#shield)"/>
+  <!-- Tower with battlements and gate -->
+  <path fill="#FFFFFF" d="
+    M78 78 H100 V94 H117 V78 H139 V94 H156 V78 H178
+    V112 H166 V196 H90 V112 H78 Z
+    M114 196 V166 A14 14 0 0 1 142 166 V196 Z" fill-rule="evenodd"/>
+</svg>

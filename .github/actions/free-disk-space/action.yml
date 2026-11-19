@@ -1,0 +1,14 @@
+name: Free disk space (Linux)
+description: >
+  Removes large preinstalled toolchains from the Ubuntu runner so the
+  unpacked Chromium source (~10 GB plus a 2 GB download) fits.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        df -h /
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL \
+                    /usr/local/share/boost /usr/share/swift || true
+        sudo docker image prune --all --force >/dev/null 2>&1 || true
+        df -h /

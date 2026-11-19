@@ -1,0 +1,11 @@
+# Bastion GN build arguments.
+# Appended after ungoogled-chromium's flags.gn and flags.windows.gn; when the
+# same argument appears twice, the later value (this file) wins.
+#
+# Already set by upstream and kept as-is:
+#   is_official_build=true, chrome_pgo_phase=2 (profile-guided optimisation),
+#   proprietary_codecs=true + ffmpeg_branding="Chrome" (H.264/AAC: Twitch etc.),
+#   symbol_level=0, enable_rust=true.
+
+# Never let the build pick up Google's own branding.
+is_chrome_branded=false

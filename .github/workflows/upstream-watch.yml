@@ -1,0 +1,104 @@
+# Keeps Bastion on the latest Chromium automatically.
+#
+# Every day: if ungoogled-chromium-windows has published a newer release,
+#   1. move upstream/ to it,
+#   2. check every patch still applies (Linux, ~15 min),
+#   3a. if they do: commit to main, tag the new version and start the build,
+#       which publishes a GitHub Release when it finishes (~1 day);
+#   3b. if not: open an issue with the failure log for a human (see
+#       docs/MAINTAINING.md, "When the automatic update fails").
+name: upstream-watch
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Look for a newer upstream release
+        id: check
+        run: python tools/bump_upstream.py --check
+
+      - name: Move to the new release
+        id: bump
+        if: steps.check.outputs.update == 'true'
+        run: python tools/bump_upstream.py --to "${{ steps.check.outputs.newest }}"
+
+      - uses: ./.github/actions/free-disk-space
+        if: steps.check.outputs.update == 'true'
+
+      - name: Check every patch still applies
+        id: patches
+        if: steps.check.outputs.update == 'true'
+        run: |
+          set -o pipefail
+          python tools/check_patches.py --workdir "$RUNNER_TEMP/work" --cache "$RUNNER_TEMP/cache" 2>&1 | tee "$RUNNER_TEMP/check.log"
+
+      - name: Commit, tag and start the build
+        if: >-
+          steps.check.outputs.update == 'true' && steps.patches.outcome == 'success' &&
+          steps.bump.outputs.notes == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+          UPSTREAM_TAG: ${{ steps.check.outputs.newest }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add upstream/ungoogled-chromium-windows config/bastion.toml
+          git commit -m "Update to Chromium $VERSION (upstream $UPSTREAM_TAG)"
+          git tag "$VERSION"
+          git push origin HEAD:main "$VERSION"
+          # Pushes made with the workflow token don't trigger other workflows,
+          # so start the build explicitly.
+          gh workflow run build.yml --ref "$VERSION"
+
+      - name: Open an issue if the update needs a human
+        if: >-
+          steps.check.outputs.update == 'true' &&
+          (failure() || steps.bump.outputs.notes != '')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_TAG: ${{ steps.check.outputs.newest }}
+          NOTES: ${{ steps.bump.outputs.notes }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Automatic update to $UPSTREAM_TAG needs attention"
+          if gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number' | grep -q .; then
+            echo "Issue already open."
+            exit 0
+          fi
+          {
+            echo "The daily update to upstream \`$UPSTREAM_TAG\` stopped before building."
+            echo
+            echo "Run log: $RUN_URL"
+            if [ -n "$NOTES" ]; then echo; echo "**Notes:** $NOTES"; fi
+            echo
+            echo "Last lines of the patch check:"
+            echo '```'
+            tail -n 60 "$RUNNER_TEMP/check.log" 2>/dev/null || echo "(no log)"
+            echo '```'
+            echo
+            echo "See docs/MAINTAINING.md, section \"When the automatic update fails\"."
+          } > body.md
+          gh issue create --title "$title" --body-file body.md

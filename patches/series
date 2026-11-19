@@ -1,0 +1,7 @@
+# Bastion's own Chromium patches, applied in this order AFTER all of
+# ungoogled-chromium's patches and its Windows patches.
+# Paths are relative to this directory. Lines starting with # are ignored.
+
+# Own install folder (%LOCALAPPDATA%\Bastion), registry names and Windows IDs,
+# so Bastion never collides with Chrome or another Chromium browser.
+bastion/branding/install-modes.patch

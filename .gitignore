@@ -1,0 +1,10 @@
+# Build work directories (multi-GB Chromium trees)
+/work/
+/work-check/
+/download-cache/
+/build/
+
+# Node / Python clutter
+node_modules/
+__pycache__/
+*.pyc
