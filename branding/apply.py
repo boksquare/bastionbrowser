@@ -110,6 +110,29 @@ def _message_ids(src, grd_path):
             if isinstance(node, message.MessageNode)]
 
 
+_PART_RE = re.compile(r'<part\s+file="([^"]+)"')
+
+
+def _grd_with_parts(grd_path):
+    """grd_path plus every .grdp file it pulls in with <part file="...">.
+
+    Parts can include further parts; each path is relative to the file that
+    names it. E.g. chromium_strings.grd keeps ~140 settings strings
+    ("About Chromium", ...) in settings_chromium_strings.grdp.
+    """
+    files, queue = [], [grd_path]
+    while queue:
+        path = queue.pop(0)
+        if path in files:
+            continue
+        if not path.exists():
+            raise SystemExit(f'Branding: missing string file {path}')
+        files.append(path)
+        queue.extend(path.parent / rel for rel in
+                     _PART_RE.findall(path.read_text(encoding='utf-8')))
+    return files
+
+
 def _rebrand_strings(src, grd_rel, xtb_glob):
     grd_path = src / grd_rel
     xtb_paths = sorted(src.glob(xtb_glob))
@@ -117,7 +140,8 @@ def _rebrand_strings(src, grd_rel, xtb_glob):
         raise SystemExit(f'Branding: missing {grd_rel} or its translations ({xtb_glob})')
 
     old_ids = _message_ids(src, grd_path)
-    grd_path.write_text(_rename_product(grd_path.read_text(encoding='utf-8')), encoding='utf-8')
+    for path in _grd_with_parts(grd_path):
+        path.write_text(_rename_product(path.read_text(encoding='utf-8')), encoding='utf-8')
     new_ids = _message_ids(src, grd_path)
     if len(old_ids) != len(new_ids):
         raise SystemExit(f'Branding: message count changed while rebranding {grd_rel}')

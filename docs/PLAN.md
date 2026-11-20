@@ -48,7 +48,9 @@
 - [x] Cloud build pipeline (chained stages) and GitHub Releases
 - [x] Fast Linux patch check
 - [x] Daily automatic Chromium updates: patch check → tag → build → release, or an issue if a human is needed
-- [ ] First successful Windows build, installed and smoke-tested
+- [x] First successful Windows build: release 157.0.8103.78-1 (about 39 hours on free runners, 9 stages)
+- [x] Rename the ~100 settings strings kept in settings_chromium_strings.grdp (missed in -1; fixed in the next release)
+- [ ] Installed and smoke-tested on a Windows PC
 
 ### Phase 1: Chrome-equivalent basics
 - Confirm the Chrome Web Store "Add to Chrome" button and extension auto-updates work
